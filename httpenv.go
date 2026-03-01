@@ -19,6 +19,7 @@ func serve(w http.ResponseWriter, r *http.Request) {
   }
   w.Write([]byte(bytes))
 }
+// to start httpenv
 func main() {
   fmt.Printf("Starting httpenv listening on port 8888.\n")
   http.HandleFunc("/", serve)
