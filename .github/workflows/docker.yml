@@ -23,3 +23,35 @@ jobs:
         uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387
         with:
           dockerfile: Dockerfile
+
+  build:
+    needs: lint
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+
+      - name: Build Image for testing
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        with:
+          context: .
+          load: true
+          tags: httpenv:test
+
+      - name: Smoke test
+        run: |
+          # Start the container in the background (-d), with a variable we can check for.
+          docker run -d --name httpenv -p 8888:8888 -e GREETING=hello-from-ci httpenv:test
+
+          # Retry until the server answers (Part 1, Lesson 5). Save the answer to a file
+          # and also print it to the log (tee).
+          curl --fail --silent --retry 10 --retry-delay 1 --retry-connrefused \
+               http://127.0.0.1:8888 | tee response.json
+
+          # The real check: did our variable come back? grep -q exits 1 if not → step red.
+          grep -q '"GREETING":"hello-from-ci"' response.json
+
+          docker rm -f httpenv
