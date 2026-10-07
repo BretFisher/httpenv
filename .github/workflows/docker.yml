@@ -28,6 +28,10 @@ jobs:
     needs: lint
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -55,3 +59,18 @@ jobs:
           grep -q '"GREETING":"hello-from-ci"' response.json
 
           docker rm -f httpenv
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/petroschol/httpenv:latest
