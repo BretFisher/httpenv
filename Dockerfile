@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /out/httpenv httpenv.go
 
 # ---- Stage 2: the small image we actually ship -------------------------------
 # Only this stage ends up in the final image. The Go compiler (~300 MB) stays behind.
-FROM alpine:3.24
+FROM alpine
 
 RUN addgroup -g 1000 httpenv \
     && adduser -u 1000 -G httpenv -D httpenv
